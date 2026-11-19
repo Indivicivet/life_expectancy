@@ -1,6 +1,7 @@
 // Li, Hüsing & Kaaks (2014), EPIC-Heidelberg, Tables 2 and 3.
-// Each option contains [men, women] estimates in years relative to its
-// study reference and mutually adjusted mortality hazard ratios.
+// EPIC options contain [men, women] published years and hazard ratios.
+// Activity, alcohol and sleep use external relative risks as hazard ratios;
+// their life-year estimates are derived from the calibrated baseline.
 const factors = [
   {
     id: "smoking", label: "Smoking", help: "Cigarettes per day for current smokers; time since quitting for former smokers.",
@@ -22,10 +23,15 @@ const factors = [
     ],
   },
   {
-    id: "activity", label: "Physical activity", help: "Leisure activity (36 MET-h/wk ≈ 9 h of brisk walking). The low group still includes moderately active people.",
+    id: "activity", label: "Physical activity", help: "Choose the nearest weekly minutes of moderate activity outside work (e.g. brisk walking); count vigorous minutes twice. Estimated benefit levels off above 300 min.",
     options: [
-      { label: "≥36 MET-h/wk", years: [0, 0], hr: [1, 1] },
-      { label: "<36 MET-h/wk", years: [-0.4, -1.1], hr: [1.05, 1.16], ci: [[-1.2, 0.3], [-2.1, -0.05]] },
+      // Garcia et al. (2023), Table 1: risks vs inactivity, rebased to 300 min.
+      { label: "0 min/wk", hr: [1 / 0.66, 1 / 0.66] },
+      { label: "30 min/wk", hr: [0.77 ** (30 / 75) / 0.66, 0.77 ** (30 / 75) / 0.66] },
+      { label: "75 min/wk", hr: [0.77 / 0.66, 0.77 / 0.66] },
+      { label: "150 min/wk", hr: [0.69 / 0.66, 0.69 / 0.66] },
+      { label: "225 min/wk", hr: [Math.sqrt(0.69 / 0.66), Math.sqrt(0.69 / 0.66)] },
+      { label: "300+ min/wk", hr: [1, 1] },
     ],
   },
   {
@@ -43,36 +49,39 @@ const factors = [
     ],
   },
   {
-    id: "alcohol", label: "Alcohol", help: "Lifetime daily average (1 drink = 12 g ethanol, 1.5 UK units). Women's 0.6–1/day estimate was not statistically significant.",
+    id: "alcohol", label: "Alcohol", help: "Long-term average UK units per week (1 unit = 8 g ethanol). 14/week = 2/day. Low-dose net mortality effects are uncertain; the UK low-risk limit is 14/week.",
     options: [
-      { label: ["≤2 drinks/day", "≤0.5 drinks/day"], years: [0, 0], hr: [1, 1] },
-      { label: ["2.1–4/day", "0.6–1/day"], years: [-1.7, 1.0], hr: [1.24, 0.86], ci: [[-2.7, -0.8], [-0.3, 2.6]] },
-      { label: [">4/day", ">1/day"], years: [-3.1, -1.0], hr: [1.50, 1.15], ci: [[-4.0, -1.9], [-2.4, 0.3]] },
+      // Zhao et al. (2023), Table 4. Do not credit uncertain low-dose benefits.
+      { label: "0 units/wk", hr: [1, 1] },
+      { label: "1 unit/wk", hr: [1, 1] },
+      { label: "2–21 units/wk", hr: [1, 1] },
+      { label: "22–39 units/wk", hr: [1.01, 1.21] },
+      { label: "40–56 units/wk", hr: [1.15, 1.34] },
+      { label: "57+ units/wk", hr: [1.34, 1.61] },
+    ],
+  },
+  {
+    id: "sleep", label: "Sleep duration", help: "Typical hours of sleep per night. Long sleep may reflect underlying illness rather than cause it.",
+    options: [
+      // Imbalanced sleep (2025) meta-analysis: pooled HRs, both sexes.
+      { label: "<7 h", hr: [1.14, 1.14] },
+      { label: "7–<9 h", hr: [1, 1] },
+      { label: "≥9 h", hr: [1.34, 1.34] },
     ],
   },
 ];
 
 const baselineYears = [47.5, 48.7];
 const presets = [
-  { id: "example", label: "Overweight, active", choices: [0, 2, 0, 1, 0, 1] },
-  { id: "comparison", label: "Light smoker, lean", choices: [3, 0, 1, 0, 1, 0] },
-  { id: "reference", label: "Study reference", choices: [0, 0, 0, 0, 0, 0] },
-  { id: "higher", label: "Higher risk", choices: [4, 3, 1, 1, 1, 2] },
+  { id: "example", label: "Overweight, active", choices: [0, 2, 5, 1, 0, 3, 1] },
+  { id: "comparison", label: "Light smoker, lean", choices: [3, 0, 2, 0, 1, 2, 1] },
+  { id: "reference", label: "Model reference", choices: [0, 0, 5, 0, 0, 0, 1] },
+  { id: "higher", label: "Higher risk", choices: [4, 3, 0, 1, 1, 5, 0] },
 ];
-
-const sleepOptions = [
-  { label: "<7 h", years: -1.2 },
-  { label: "7–9 h", years: 0 },
-  { label: ">9 h", years: -2.6 },
-];
-
-function optionLabel(option, sex) {
-  return Array.isArray(option.label) ? option.label[sex] : option.label;
-}
 
 function lifeExpectancy(choices, sex) {
   return baselineYears[sex] + factors.reduce(
-    (total, factor, i) => total + factor.options[choices[i]].years[sex], 0,
+    (total, factor, i) => total + optionYears(factor.options[choices[i]], sex), 0,
   );
 }
 
@@ -118,6 +127,13 @@ function calibrate(sex) {
 
 const parameters = baselineYears.map((_, sex) => calibrate(sex));
 
+function optionYears(option, sex) {
+  if (option.years) return option.years[sex];
+  if (option.hr[sex] === 1) return 0;
+  const { hazard, slope } = parameters[sex];
+  return gompertzYears(hazard, slope, option.hr[sex]) - baselineYears[sex];
+}
+
 function mortalityRisk(choices, sex) {
   const { hazard, slope } = parameters[sex];
   const hr = factors.reduce((product, factor, i) => product * factor.options[choices[i]].hr[sex], 1);
@@ -125,11 +141,11 @@ function mortalityRisk(choices, sex) {
 }
 
 // Averaging each factor's marginal risk reduction over every possible order
-// (Shapley allocation) makes the six bars sum to the total risk difference.
-// Only 2^6 combinations are needed.
+// (Shapley allocation) makes all bars sum to the total risk difference.
 function riskContributions(choices, reference, sex) {
   const n = factors.length;
-  const factorial = [1, 1, 2, 6, 24, 120, 720];
+  const factorial = [1];
+  for (let i = 1; i <= n; i++) factorial.push(i * factorial[i - 1]);
   const masks = Array.from({ length: 2 ** n }, (_, mask) => {
     const profile = reference.map((value, i) => mask & (1 << i) ? choices[i] : value);
     return mortalityRisk(profile, sex);
@@ -151,7 +167,7 @@ function compare(choices, reference, sex) {
   const referenceYears = lifeExpectancy(reference, sex);
   const risks = riskContributions(choices, reference, sex);
   return factors.map((factor, i) => {
-    const years = factor.options[choices[i]].years[sex] - factor.options[reference[i]].years[sex];
+    const years = optionYears(factor.options[choices[i]], sex) - optionYears(factor.options[reference[i]], sex);
     return { years, risk: risks[i], microlives: 48 * years / referenceYears };
   });
 }

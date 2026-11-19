@@ -1,16 +1,16 @@
 # Calculations and assumptions
 
-The main calculator uses the six mutually adjusted factors in [Li, Hüsing & Kaaks (2014)](https://doi.org/10.1186/1741-7015-12-59), tables 2 and 3. See [LIFESTYLE_RESEARCH.md](LIFESTYLE_RESEARCH.md) for the category definitions, hazard ratios, confidence intervals and evidence. The numbers are population estimates for age 40, not predictions for a particular individual.
+The model uses the baseline and four factors from [Li, Hüsing & Kaaks (2014)](https://doi.org/10.1186/1741-7015-12-59), tables 2 and 3, and replaces activity and alcohol and adds sleep using external meta-analyses. See [LIFESTYLE_RESEARCH.md](LIFESTYLE_RESEARCH.md) for the definitions, effect sizes, uncertainty and evidence. The combined model is illustrative and has not been validated against a single cohort.
 
 ## Life expectancy
 
 Reference remaining life expectancy at age 40 is 47.5 years for men and 48.7 years for women. The study's reference habits are never smoking, BMI 22.5–24.9, at least 36 MET-hours/week of leisure activity, at least 200 g/day of fruit and vegetables, less than 120 g/day of red and processed meat, and no/light drinking (the study's sex-specific grouping).
 
-The study's Gompertz model found that the individual changes in life expectancy remained approximately constant across other risk factor combinations. We add the rounded, mutually adjusted differences (Table 3) to the reference remaining life expectancy. The study reports a smoking–BMI interaction; the simple additive estimate does not reproduce that nuance. We do not combine the marginal confidence intervals, since their covariance is not available.
+The study's Gompertz model found that the individual changes in life expectancy remained approximately constant across other risk factor combinations. We retain the published, mutually adjusted year differences (Table 3) for smoking, BMI, fruit/vegetables and red/processed meat. For activity, alcohol and sleep, we approximate each relative risk as a proportional hazard multiplier and calculate its life-year difference by integrating the reconstructed survival curve with that factor alone, then subtracting the baseline years. The model adds all seven differences. This assumes that the three external estimates apply to the reference population and don't overlap with the other effects. Neither assumption is established. We use the EPIC baseline as an approximate anchor at 300+ moderate-equivalent minutes/week, no alcohol and 7–<9 h sleep. Those new categories are not the original EPIC reference categories.
 
-For example, a male study-reference profile has an estimated age at death of 40 + 47.5 = 87.5. Changing only smoking to more than 10 cigarettes/day gives 87.5 − 9.4 = 78.1. Changing BMI to ≥30 as well gives 78.1 − 3.1 = 75.0. For the higher-risk preset, the rounded changes give 47.5 − 9.4 − 3.1 − 0.4 − 1.3 − 1.4 − 3.1 = 28.8 remaining years, close to the published combined estimate of 29.0 years. The women's equivalent is 48.7 − 7.3 − 3.2 − 1.1 − 0.8 − 2.4 − 1.0 = 32.9 years, versus the paper's 33.0.
+For example, a male model-reference profile has an estimated age at death of 40 + 47.5 = 87.5. Changing only smoking to more than 10 cigarettes/day gives 87.5 − 9.4 = 78.1. Changing BMI to ≥30 as well gives 78.1 − 3.1 = 75.0. The original EPIC combined estimates no longer correspond to the higher-risk preset because three factors now use different data and categories.
 
-The selectable example lifestyles ("Overweight, active", "Light smoker, lean", and "Higher risk") are example category combinations, not population averages. "Study reference" is the paper's baseline category.
+The selectable example lifestyles ("Overweight, active", "Light smoker, lean", and "Higher risk") are example category combinations, not population averages. "Model reference" is the anchor described above.
 
 ## Millimorts
 
@@ -31,7 +31,7 @@ The annual life table integrates survival using the trapezoid rule at integer ag
 | Study reference, ten-year millimorts | 3.0 | 2.1 |
 | Heavy-smoking only, ten-year millimorts | 10.4 | 5.6 |
 
-Ten-year risk in millimorts is `1000 × (1 − S(10))`. Unlike life-year differences, risk differences are not additive because hazards multiply and survival is nonlinear. To attribute the total risk difference to factors, we average the marginal millimorts avoided by changing each factor across every possible order of the six choices (a Shapley allocation). This produces signed bars that sum to the displayed total difference; it does not establish causality.
+Ten-year risk in millimorts is `1000 × (1 − S(10))`. Unlike life-year differences, risk differences are not additive because hazards multiply and survival is nonlinear. To attribute the total risk difference to factors, we average the marginal millimorts avoided by changing each factor across every possible order of the seven choices (a Shapley allocation). This produces signed bars that sum to the displayed total difference; it does not establish causality.
 
 Positive bars mean fewer expected deaths per thousand than the comparison lifestyle; negative bars mean more. Absolute risk values are separately shown for both lifestyles.
 
@@ -43,6 +43,8 @@ A microlife is 30 minutes of expected lifespan (see [Spiegelhalter, 2012](https:
 
 For example, a 2-year difference spread over a 40-year remaining lifespan corresponds to 2.4 microlives per day, or 72 minutes of expected life per day. This is a unit conversion for long-term associations, not the immediate impact of a single day's behaviour.
 
-## Sleep
+## External mortality estimates
 
-The [Canadian sleep duration study (2022)](https://pubmed.ncbi.nlm.nih.gov/36029755/) estimated life expectancy at age 20 to be 1.2 years longer among adults meeting the sleep duration recommendations than those sleeping too little, and 2.6 years longer than those sleeping too much. We show the signed contrast against the recommended group separately. Sleep is not included in the German cohort life expectancy, millimort, or microlife totals, because the study populations and models differ.
+- Activity: [Garcia et al. (2023), Table 1](https://doi.org/10.1136/bjsports-2022-105669) reports relative risks of 1, 0.77, 0.69 and 0.66 at moderate-equivalent 0, 75, 150 and 300 minutes/week respectively. The 30 and 225 minute options use log-linear interpolation between the adjacent reported estimates. Divide all risks by 0.66 to anchor the most active category; the model caps the benefit above 300 minutes/week as the additional evidence is uncertain.
+- Alcohol: [Zhao et al. (2023), Table 4](https://doi.org/10.1001/jamanetworkopen.2023.6185) provides sex-specific relative risk categories, converted to whole UK units/week. We set inconclusive low-dose protective estimates to 1 (neutral), not to the published protective point estimates. No safe-dose claim is implied. High consumption estimates are retained and the top category groups all doses above the study threshold.
+- Sleep: [2025 sleep meta-analysis](https://doi.org/10.1007/s11357-025-01592-y) reports pooled hazard ratios of 1.14 for <7 hours and 1.34 for ≥9 hours compared with 7–8 hours. We use these ratios for both sexes and approximate the reference as 7–<9 hours. Long sleep may be a consequence of illness.

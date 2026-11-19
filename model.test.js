@@ -18,7 +18,7 @@ const healthy = presets.find(preset => preset.id === "reference").choices;
 const higher = presets.find(preset => preset.id === "higher").choices;
 for (const sex of [0, 1]) {
   near(lifeExpectancy(healthy, sex), baselineYears[sex]);
-  near(lifeExpectancy(higher, sex), [29.0, 33.0][sex], 0.25);
+  assert.ok(lifeExpectancy(higher, sex) < baselineYears[sex]);
   const { hazard, slope } = parameters[sex];
   near(gompertzYears(hazard, slope, 1), baselineYears[sex]);
   near(gompertzYears(hazard, slope, factors[0].options[4].hr[sex]),
@@ -32,6 +32,30 @@ for (const sex of [0, 1]) {
   assert.ok(smokingDelta[0].risk < 0);
   assert.ok(smokingDelta[0].years < 0);
   smokingDelta.slice(1).forEach(row => near(row.risk, 0));
+  for (const id of ["activity", "alcohol", "sleep"]) {
+    const index = factors.findIndex(factor => factor.id === id);
+    const options = factors[index].options;
+    for (const [choice, option] of options.entries()) {
+      const profile = [...healthy];
+      profile[index] = choice;
+      const rows = compare(profile, healthy, sex);
+      near(lifeExpectancy(profile, sex), gompertzYears(hazard, slope, option.hr[sex]));
+      near(rows[index].risk, mortalityRisk(healthy, sex) - mortalityRisk(profile, sex));
+      near(rows[index].years, lifeExpectancy(profile, sex) - baselineYears[sex]);
+      rows.forEach((row, i) => {
+        if (i !== index) {
+          near(row.years, 0);
+          near(row.risk, 0);
+        }
+      });
+    }
+  }
+  const activity = factors.find(factor => factor.id === "activity").options;
+  assert.ok(activity.every((option, i) => i === 0 || option.hr[sex] < activity[i - 1].hr[sex]));
+  const alcohol = factors.find(factor => factor.id === "alcohol").options;
+  assert.ok(alcohol.every((option, i) => i === 0 || option.hr[sex] >= alcohol[i - 1].hr[sex]));
+  const sleep = factors.find(factor => factor.id === "sleep").options;
+  assert.ok(sleep[0].hr[sex] > sleep[1].hr[sex] && sleep[2].hr[sex] > sleep[1].hr[sex]);
   for (const factor of factors) {
     for (const option of factor.options) {
       if (!option.ci) continue;

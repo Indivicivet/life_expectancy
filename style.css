@@ -84,11 +84,6 @@ h1, h2 { margin: 0; font-size: 1rem; }
 .bar.loss { background: var(--loss); }
 .bar-number { text-align: right; font-variant-numeric: tabular-nums; font-size: .9rem; font-weight: 700; white-space: nowrap; }
 .bar-number small { font-size: .71rem; color: var(--muted); font-weight: 400; display: block; }
-.sleep-result { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.sleep-result p, .sleep-value span { font-size: .81rem; }
-.sleep-value { display: grid; justify-items: end; text-align: right; flex-shrink: 0; }
-.sleep-value strong { font-size: 1.4rem; font-variant-numeric: tabular-nums; }
-.sleep-value span { color: var(--muted); }
 .editor { padding: 10px 12px; }
 .editor-heading { justify-content: space-between; }
 .editor-heading h2 { font-size: 1.05rem; }

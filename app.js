@@ -5,7 +5,6 @@ let sex = 0;
 let referenceId = "comparison";
 let customReference = null;
 let metric = "risk";
-let sleep = 1;
 
 const metrics = [
   { id: "risk", label: "Millimorts", unit: "mmt / 10 yr", digits: 1,
@@ -13,7 +12,7 @@ const metrics = [
     note: "Millimorts avoided over 10 years, Shapley-allocated so bars sum to the total. Negative means higher risk." },
   { id: "years", label: "Life years", unit: "years", digits: 1,
     left: "Years lost", right: "Years gained",
-    note: "Rounded life-expectancy differences from the study; their sum matches the total above." },
+    note: "Estimated life-expectancy differences; their sum matches the total above." },
   { id: "microlives", label: "Microlives/day", unit: "µlives/day", digits: 1,
     left: "Time lost", right: "Time gained",
     note: "1 microlife = 30 minutes of expected life, spread over the comparison group's remaining years." },
@@ -81,8 +80,6 @@ function readHash() {
   if (params.has("s") && (s === 0 || s === 1)) sex = s;
   const m = params.get("m");
   if (metrics.some(item => item.id === m)) metric = m;
-  const sl = Number(params.get("sl"));
-  if (params.has("sl") && Number.isInteger(sl) && sl >= 0 && sl < sleepOptions.length) sleep = sl;
   const r = params.get("r");
   const parsedRef = parseProfile(params.get("cr"));
   if (r === "custom" && parsedRef) {
@@ -99,14 +96,13 @@ function writeHash() {
     c: choices.join(""),
     r: referenceId,
     m: metric,
-    sl: String(sleep),
   });
   if (referenceId === "custom" && customReference) params.set("cr", customReference.join(""));
   history.replaceState(null, "", "#" + params.toString());
 }
 
 function optionTitle(option, sexIndex) {
-  if (!option.ci) return "Study reference category (0.0 yr)";
+  if (!option.ci) return `Estimated vs model reference: ${signed(optionYears(option, sexIndex))} yr`;
   const [lo, hi] = option.ci[sexIndex];
   return `vs study reference: ${signed(option.years[sexIndex])} yr (95% CI: ${signed(lo)} to ${signed(hi)})`;
 }
@@ -125,7 +121,7 @@ function renderInputs() {
     row.setAttribute("role", "group");
     row.setAttribute("aria-label", factor.label);
     buttons(row, factor.options.map((option, index) => ({
-      id: index, label: optionLabel(option, sex), title: optionTitle(option, sex),
+      id: index, label: option.label, title: optionTitle(option, sex),
     })), choices[i], index => { choices[i] = index; });
     section.append(header, row, element("p", "help", factor.help));
     return section;
@@ -163,8 +159,8 @@ function renderChart(contributions, reference) {
       target.classList.add("flash");
       setTimeout(() => target.classList.remove("flash"), 700);
     });
-    const before = optionLabel(factor.options[reference[i]], sex);
-    const after = optionLabel(factor.options[choices[i]], sex);
+    const before = factor.options[reference[i]].label;
+    const after = factor.options[choices[i]].label;
     label.append(element("small", "", before === after ? after : before + " → " + after));
     const track = element("div", "bar-track");
     const bar = element("div", "bar " + tone(value, 4));
@@ -206,10 +202,6 @@ function render(syncHash = false) {
   setDelta("years-delta", years - comparisonYears);
   setDelta("risk-delta", comparisonRisk - risk);
   setDelta("microlives-delta", 48 * (years - comparisonYears) / comparisonYears);
-  setDelta("sleep-delta", sleepOptions[sleep].years);
-  const sleepImpact = byId("sleep-impact");
-  sleepImpact.textContent = signed(sleepOptions[sleep].years) + " yr vs recommended";
-  sleepImpact.className = "field-impact " + tone(sleepOptions[sleep].years);
   renderChart(contributions, reference);
   for (const [i, factor] of factors.entries()) {
     setPressed(byId("choices-" + factor.id), choices[i]);
@@ -221,7 +213,6 @@ function render(syncHash = false) {
   setPressed(byId("reference-options"), referenceId);
   setPressed(byId("metric-options"), metric);
   setPressed(byId("sex-options"), sex);
-  setPressed(byId("sleep-options"), sleep);
   setPressed(byId("preset-options"), matching?.id);
   if (syncHash) writeHash();
 }
@@ -240,8 +231,6 @@ buttons(byId("preset-options"), presets, presets[0].id, id => {
   choices = [...presets.find(preset => preset.id === id).choices];
 });
 buttons(byId("metric-options"), metrics, metric, id => { metric = id; });
-buttons(byId("sleep-options"), sleepOptions.map((option, id) => ({ ...option, id })), sleep,
-  id => { sleep = id; });
 renderReferenceButtons();
 renderInputs();
 byId("save-reference").addEventListener("click", () => {
@@ -274,7 +263,6 @@ byId("reset").addEventListener("click", () => {
   referenceId = "comparison";
   customReference = null;
   metric = "risk";
-  sleep = 1;
   history.replaceState(null, "", window.location.pathname + window.location.search);
   renderReferenceButtons();
   renderInputs();

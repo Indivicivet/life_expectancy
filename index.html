@@ -13,7 +13,7 @@
   <main class="wrap">
     <header class="topbar">
       <h1>Life expectancy calculator</h1>
-      <span>Age 40 · EPIC-Heidelberg cohort</span>
+      <span>Age 40 · Cohort-based estimates</span>
       <a href="#sources">Method &amp; sources</a>
     </header>
     <noscript><p>Enable JavaScript to use this calculator.</p></noscript>
@@ -42,20 +42,13 @@
           <div><strong id="risk-delta"></strong><span>millimorts avoided / 10 yr</span></div>
           <div><strong id="microlives-delta"></strong><span>microlives / day</span></div>
         </div>
-        <p class="note">Cohort averages from age 40 (EPIC-Heidelberg), not personal predictions.</p>
+        <p class="note">Combined estimates from several observational studies, anchored to EPIC-Heidelberg at age 40. Not personal predictions.</p>
         <div class="chart-toolbar">
           <h2>Difference by factor</h2>
           <div class="choices" id="metric-options" role="group" aria-label="Chart metric"></div>
         </div>
         <div id="chart" role="group" aria-label="Signed bar chart"></div>
         <p id="chart-note" class="note"></p>
-        <div class="sleep-result">
-          <div>
-            <h2>Sleep duration</h2>
-            <p>Canadian life-table study at age 20; kept separate from the German cohort total above.</p>
-          </div>
-          <div class="sleep-value"><strong id="sleep-delta"></strong><span>years vs 7–9 h</span></div>
-        </div>
       </section>
 
       <aside class="panel editor" aria-label="Lifestyle inputs">
@@ -67,11 +60,6 @@
           <div id="preset-options" class="choices" role="group" aria-label="Load example lifestyle"></div>
         </div>
         <div id="inputs"></div>
-        <div class="editor-section sleep-editor">
-          <div class="editor-title"><span>Sleep duration</span><span class="field-impact" id="sleep-impact"></span></div>
-          <div class="choices" id="sleep-options" role="group" aria-label="Typical sleep duration"></div>
-          <p class="help">Age 20–64: 7–9 hours per night is the study's recommended range.</p>
-        </div>
         <div class="editor-footer">
           <button id="save-reference" type="button">Use current as comparison</button>
           <button id="swap-reference" type="button">Swap</button>
@@ -82,10 +70,10 @@
     <details id="sources" class="panel sources">
       <summary>Method &amp; sources</summary>
       <div class="source-content">
-        <p>Six factors come from EPIC-Heidelberg, a German cohort of 22,469 adults followed from age 40. The authors estimated sex-specific life expectancy for each factor adjusted for the others, and found the year differences are roughly additive. Presets are example combinations, not population averages.</p>
-        <p>A millimort is a 1-in-1,000 chance of death; the 10-year figures here are reconstructed from the paper's hazard ratios and life expectancies. A microlife is 30 minutes of expected life, spread across the comparison group's remaining years.</p>
-        <p>These are observational cohort associations, not causal predictions or medical advice. In particular, the women's 0.6–1 drink/day estimate had a wide confidence interval that crossed zero, and low BMI (&lt;22.5) often reflects existing illness.</p>
-        <p><a href="https://doi.org/10.1186/1741-7015-12-59">Li, Hüsing &amp; Kaaks (2014), EPIC-Heidelberg</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/36029755/">Canadian sleep study</a> · <a href="https://doi.org/10.1136/bmj.e8223">Spiegelhalter (2012), microlives</a></p>
+        <p>The baseline and four factors come from EPIC-Heidelberg, a German cohort of 22,469 adults. Activity, alcohol and sleep use mortality estimates from later meta-analyses, converted to life years using the same reconstructed mortality curve. Combining these studies assumes independent effects; the combined estimates have not been validated. Presets are examples, not population averages.</p>
+        <p>A millimort is a 1-in-1,000 chance of death; the 10-year figures use the reconstructed EPIC mortality curve and the selected mortality multipliers. A microlife is 30 minutes of expected life, spread across the comparison group's remaining years.</p>
+        <p>These are observational associations, not causal predictions or medical advice. Low-dose alcohol is modelled as neutral for all-cause mortality because the estimates are inconclusive; cancer risk is not zero. Long sleep and low BMI may reflect underlying illness.</p>
+        <p><a href="https://doi.org/10.1186/1741-7015-12-59">EPIC-Heidelberg (2014)</a> · <a href="https://doi.org/10.1136/bjsports-2022-105669">Activity (2023)</a> · <a href="https://doi.org/10.1001/jamanetworkopen.2023.6185">Alcohol (2023)</a> · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12181477/">Sleep (2025)</a> · <a href="https://doi.org/10.1136/bmj.e8223">Microlives (2012)</a></p>
         <p><a href="LIFESTYLE_RESEARCH.md">Research, effect sizes and limitations</a> · <a href="MAGIC_NUMBERS.md">Calculations and assumptions</a> · <a href="README.md">About this project</a></p>
       </div>
     </details>
