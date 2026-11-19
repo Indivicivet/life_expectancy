@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore how lifestyle habits relate to longevity and compare estimated years of life and mortality risk.">
+  <title>Life expectancy calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="model.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <h1>Life expectancy calculator</h1>
+      <span>Age 40 · EPIC-Heidelberg cohort</span>
+      <a href="#sources">Method &amp; sources</a>
+    </header>
+    <noscript><p>Enable JavaScript to explore the estimates.</p></noscript>
+    <div class="workspace">
+      <section class="panel analysis" aria-label="Life expectancy comparison">
+        <div class="compare-toolbar">
+          <span>Compare with</span>
+          <div id="reference-options" class="choices" role="group" aria-label="Reference lifestyle"></div>
+        </div>
+        <div class="results" aria-live="polite">
+          <section>
+            <span class="result-label">Selected lifestyle</span>
+            <strong id="your-age" class="big-number"></strong>
+            <span>estimated age at death</span>
+            <span id="your-risk" class="risk-number"></span>
+          </section>
+          <section class="reference">
+            <span id="reference-label" class="result-label">Comparison</span>
+            <strong id="reference-age" class="big-number"></strong>
+            <span>estimated age at death</span>
+            <span id="reference-risk" class="risk-number"></span>
+          </section>
+        </div>
+        <div class="delta-summary">
+          <div><strong id="years-delta"></strong><span>years of life</span></div>
+          <div><strong id="risk-delta"></strong><span>millimorts avoided / 10 yr</span></div>
+        </div>
+        <p class="note">Population estimates for sustained habits from age 40, not your personal lifespan. 10-year risks are reconstructed estimates; sleep is separate.</p>
+        <div class="chart-toolbar">
+          <h2>Difference by factor</h2>
+          <div class="choices" id="metric-options" role="group" aria-label="Chart metric"></div>
+        </div>
+        <div id="chart" role="group" aria-label="Signed bar chart"></div>
+        <p id="chart-note" class="note"></p>
+        <div class="sleep-result">
+          <div>
+            <h2>Sleep duration</h2>
+            <p>Separate Canadian life-table study, age 20.</p>
+          </div>
+          <div class="sleep-value"><strong id="sleep-delta"></strong><span>years vs recommended sleep</span></div>
+        </div>
+        <p class="note">Sleep's estimate is not added to the total. Study populations and methods differ.</p>
+      </section>
+
+      <aside class="panel editor" aria-label="Lifestyle inputs">
+        <div class="editor-heading">
+          <h2>Your lifestyle</h2>
+          <div class="choices" id="sex-options" role="group" aria-label="Study sex category"></div>
+        </div>
+        <div class="preset-row">
+          <div id="preset-options" class="choices" role="group" aria-label="Load example lifestyle"></div>
+        </div>
+        <div id="inputs"></div>
+        <div class="editor-section sleep-editor">
+          <div class="editor-title"><span>Sleep duration</span><span class="field-impact" id="sleep-impact"></span></div>
+          <div class="choices" id="sleep-options" role="group" aria-label="Typical sleep duration"></div>
+          <p class="help">Age 20–64: 7–9 hours per night is the study's recommended range.</p>
+        </div>
+        <div class="editor-footer">
+          <button id="save-reference" type="button">Use current as comparison</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </aside>
+    </div>
+    <details id="sources" class="panel sources">
+      <summary>Method &amp; sources</summary>
+      <div class="source-content">
+        <p>Six factors share a model from a German prospective cohort of 22,469 adults. The researchers estimated life expectancy at age 40 by sex, adjusted for the other measured factors, and showed that the years lost could be approximately added. This page compares the selected study categories with a reference scenario. Reference scenarios are examples, not national averages.</p>
+        <p>One millimort is a one-in-a-thousand probability of death over a specified period. The 10-year risks here are illustrative model estimates reconstructed from published hazard ratios and life expectancies. They are not measured risks for an individual. A microlife is 30 minutes of expected lifetime; the daily equivalent spreads the difference in years over the comparison group's estimated remaining life.</p>
+        <p>Associations do not establish causation. Alcohol categories describe the study rather than recommendations; do not start drinking to improve a score. BMI, diet and activity categories are broad and do not capture every aspect of health.</p>
+        <p><a href="https://doi.org/10.1186/1741-7015-12-59">Li, Hüsing &amp; Kaaks (2014), EPIC-Heidelberg</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/36029755/">Canadian sleep study</a> · <a href="https://doi.org/10.1136/bmj.e8223">Spiegelhalter (2012), microlives</a></p>
+        <p><a href="LIFESTYLE_RESEARCH.md">Research, effect sizes and limitations</a> · <a href="MAGIC_NUMBERS.md">Calculations and assumptions</a> · <a href="README.md">About this project</a></p>
+      </div>
+    </details>
+  </main>
+</body>
+</html>
