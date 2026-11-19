@@ -13,7 +13,7 @@ const factors = [
     ],
   },
   {
-    id: "bmi", label: "BMI", help: "kg/m². Study categories, not individual weight targets.",
+    id: "bmi", label: "BMI", help: "kg/m². Low BMI (<22.5) in cohorts often reflects illness-related weight loss.",
     options: [
       { label: "22.5–24.9", years: [0, 0], hr: [1, 1] },
       { label: "<22.5", years: [-3.5, -2.1], hr: [1.61, 1.34] },
@@ -22,7 +22,7 @@ const factors = [
     ],
   },
   {
-    id: "activity", label: "Physical activity", help: "Leisure activity. 36 MET-hours/week ≈ 9 hours at 4 MET. The low category includes some active people, so it understates the contrast with complete inactivity.",
+    id: "activity", label: "Physical activity", help: "Leisure activity (36 MET-h/wk ≈ 9 h of brisk walking). The low group still includes moderately active people.",
     options: [
       { label: "≥36 MET-h/wk", years: [0, 0], hr: [1, 1] },
       { label: "<36 MET-h/wk", years: [-0.4, -1.1], hr: [1.05, 1.16] },
@@ -43,7 +43,7 @@ const factors = [
     ],
   },
   {
-    id: "alcohol", label: "Alcohol", help: "Lifetime daily average; one study drink = 12 g alcohol (1.5 UK units). No reason to start drinking; the female middle category's apparent benefit was statistically uncertain.",
+    id: "alcohol", label: "Alcohol", help: "Lifetime daily average (1 drink = 12 g ethanol, 1.5 UK units). Women's 0.6–1/day estimate was not statistically significant.",
     options: [
       { label: ["≤2 drinks/day", "≤0.5 drinks/day"], years: [0, 0], hr: [1, 1] },
       { label: ["2.1–4/day", "0.6–1/day"], years: [-1.7, 1.0], hr: [1.24, 0.86] },

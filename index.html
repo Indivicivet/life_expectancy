@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore how lifestyle habits relate to longevity and compare estimated years of life and mortality risk.">
+  <meta name="description" content="Compare life expectancy, 10-year mortality risk, and microlives across smoking, BMI, diet, alcohol, activity, and sleep.">
   <title>Life expectancy calculator</title>
   <link rel="stylesheet" href="style.css">
   <script src="model.js" defer></script>
@@ -16,7 +16,7 @@
       <span>Age 40 · EPIC-Heidelberg cohort</span>
       <a href="#sources">Method &amp; sources</a>
     </header>
-    <noscript><p>Enable JavaScript to explore the estimates.</p></noscript>
+    <noscript><p>Enable JavaScript to use this calculator.</p></noscript>
     <div class="workspace">
       <section class="panel analysis" aria-label="Life expectancy comparison">
         <div class="compare-toolbar">
@@ -41,7 +41,7 @@
           <div><strong id="years-delta"></strong><span>years of life</span></div>
           <div><strong id="risk-delta"></strong><span>millimorts avoided / 10 yr</span></div>
         </div>
-        <p class="note">Population estimates for sustained habits from age 40, not your personal lifespan. 10-year risks are reconstructed estimates; sleep is separate.</p>
+        <p class="note">Cohort averages from age 40 (EPIC-Heidelberg), not personal predictions.</p>
         <div class="chart-toolbar">
           <h2>Difference by factor</h2>
           <div class="choices" id="metric-options" role="group" aria-label="Chart metric"></div>
@@ -51,11 +51,10 @@
         <div class="sleep-result">
           <div>
             <h2>Sleep duration</h2>
-            <p>Separate Canadian life-table study, age 20.</p>
+            <p>Canadian life-table study at age 20; kept separate from the German cohort total above.</p>
           </div>
           <div class="sleep-value"><strong id="sleep-delta"></strong><span>years vs recommended sleep</span></div>
         </div>
-        <p class="note">Sleep's estimate is not added to the total. Study populations and methods differ.</p>
       </section>
 
       <aside class="panel editor" aria-label="Lifestyle inputs">
@@ -81,9 +80,9 @@
     <details id="sources" class="panel sources">
       <summary>Method &amp; sources</summary>
       <div class="source-content">
-        <p>Six factors share a model from a German prospective cohort of 22,469 adults. The researchers estimated life expectancy at age 40 by sex, adjusted for the other measured factors, and showed that the years lost could be approximately added. This page compares the selected study categories with a reference scenario. Reference scenarios are examples, not national averages.</p>
-        <p>One millimort is a one-in-a-thousand probability of death over a specified period. The 10-year risks here are illustrative model estimates reconstructed from published hazard ratios and life expectancies. They are not measured risks for an individual. A microlife is 30 minutes of expected lifetime; the daily equivalent spreads the difference in years over the comparison group's estimated remaining life.</p>
-        <p>Associations do not establish causation. Alcohol categories describe the study rather than recommendations; do not start drinking to improve a score. BMI, diet and activity categories are broad and do not capture every aspect of health.</p>
+        <p>Six factors come from EPIC-Heidelberg, a German cohort of 22,469 adults followed from age 40. The authors estimated sex-specific life expectancy for each factor adjusted for the others, and found the year differences are roughly additive. Presets are example combinations, not population averages.</p>
+        <p>A millimort is a 1-in-1,000 chance of death; the 10-year figures here are reconstructed from the paper's hazard ratios and life expectancies. A microlife is 30 minutes of expected life, spread across the comparison group's remaining years.</p>
+        <p>These are observational cohort associations, not causal predictions or medical advice. In particular, the women's 0.6–1 drink/day estimate had a wide confidence interval that crossed zero, and low BMI (&lt;22.5) often reflects existing illness.</p>
         <p><a href="https://doi.org/10.1186/1741-7015-12-59">Li, Hüsing &amp; Kaaks (2014), EPIC-Heidelberg</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/36029755/">Canadian sleep study</a> · <a href="https://doi.org/10.1136/bmj.e8223">Spiegelhalter (2012), microlives</a></p>
         <p><a href="LIFESTYLE_RESEARCH.md">Research, effect sizes and limitations</a> · <a href="MAGIC_NUMBERS.md">Calculations and assumptions</a> · <a href="README.md">About this project</a></p>
       </div>

@@ -15,15 +15,17 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; line-height: 1.45; }
-button, input { font: inherit; }
-button, input[type="number"] {
+button {
+  font: inherit;
   border: 1px solid #becbc0;
   border-radius: 5px;
   background: #fff;
   color: var(--ink);
   min-height: 36px;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-weight: 630;
 }
-button { cursor: pointer; padding: 5px 10px; font-weight: 630; }
 button:hover { background: #eff4ee; }
 button[aria-pressed="true"] { background: #def0e1; border-color: #659777; color: #15492c; }
 :focus-visible { outline: 3px solid #2768ac; outline-offset: 3px; }

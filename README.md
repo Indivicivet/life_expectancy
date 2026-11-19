@@ -1,6 +1,6 @@
 # Life expectancy calculator
 
-Explore the relative size of lifestyle-associated mortality risks and changes in life expectancy. The [GitHub Pages URL](https://indivicivet.github.io/life_expectancy/) will be available once the repository is published.
+Compare lifestyle-associated mortality risks and life expectancy differences. Once published, this will live at [indivicivet.github.io/life_expectancy/](https://indivicivet.github.io/life_expectancy/).
 
 Compare long-term habits in smoking, physical activity, body weight, alcohol, fruit and vegetable intake, and red and processed meat consumption. The main model is based on the German EPIC-Heidelberg cohort at age 40. Sleep uses a separate study. Choose a reference lifestyle and display life years, microlives per day, or estimated 10-year millimorts.
 

@@ -10,13 +10,13 @@ let sleep = 1;
 const metrics = [
   { id: "risk", label: "Millimorts", unit: "mmt / 10 yr", digits: 1,
     left: "More deaths", right: "Fewer deaths",
-    note: "Bars show millimorts avoided over 10 years, allocated across factors so they sum to the total difference. Negative means greater risk." },
+    note: "Millimorts avoided over 10 years, Shapley-allocated so bars sum to the total. Negative means higher risk." },
   { id: "years", label: "Life years", unit: "years", digits: 1,
     left: "Years lost", right: "Years gained",
-    note: "Bars use the study's rounded life-expectancy contrasts. Their total approximates the combined modelled difference." },
+    note: "Rounded life-expectancy differences from the study; their sum matches the total above." },
   { id: "microlives", label: "Microlives/day", unit: "µlives/day", digits: 1,
     left: "Time lost", right: "Time gained",
-    note: "One microlife = 30 minutes of expected life. The difference is spread over the comparison lifestyle's estimated remaining years." },
+    note: "1 microlife = 30 minutes of expected life, spread over the comparison group's remaining years." },
 ];
 
 function signed(number, digits = 1) {
