@@ -10,7 +10,7 @@ The study's Gompertz model found that the individual changes in life expectancy 
 
 For example, a male study-reference profile has an estimated age at death of 40 + 47.5 = 87.5. Changing only smoking to more than 10 cigarettes/day gives 87.5 − 9.4 = 78.1. Changing BMI to ≥30 as well gives 78.1 − 3.1 = 75.0. For the higher-risk preset, the rounded changes give 47.5 − 9.4 − 3.1 − 0.4 − 1.3 − 1.4 − 3.1 = 28.8 remaining years, close to the published combined estimate of 29.0 years. The women's equivalent is 48.7 − 7.3 − 3.2 − 1.1 − 0.8 − 2.4 − 1.0 = 32.9 years, versus the paper's 33.0.
 
-The selectable example lifestyles ("Mixed A", "Mixed B" and "Higher risk") are illustrative category combinations, not estimates of typical people or country averages. The "Study reference" is the paper's main reference combination, not a prescription.
+The selectable example lifestyles ("Overweight, active", "Light smoker, lean", and "Higher risk") are example category combinations, not population averages. "Study reference" is the paper's baseline category.
 
 ## Millimorts
 

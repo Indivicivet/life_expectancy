@@ -25,7 +25,7 @@
         </div>
         <div class="results" aria-live="polite">
           <section>
-            <span class="result-label">Selected lifestyle</span>
+            <span id="your-label" class="result-label">Selected lifestyle</span>
             <strong id="your-age" class="big-number"></strong>
             <span>estimated age at death</span>
             <span id="your-risk" class="risk-number"></span>
@@ -40,6 +40,7 @@
         <div class="delta-summary">
           <div><strong id="years-delta"></strong><span>years of life</span></div>
           <div><strong id="risk-delta"></strong><span>millimorts avoided / 10 yr</span></div>
+          <div><strong id="microlives-delta"></strong><span>microlives / day</span></div>
         </div>
         <p class="note">Cohort averages from age 40 (EPIC-Heidelberg), not personal predictions.</p>
         <div class="chart-toolbar">
@@ -53,7 +54,7 @@
             <h2>Sleep duration</h2>
             <p>Canadian life-table study at age 20; kept separate from the German cohort total above.</p>
           </div>
-          <div class="sleep-value"><strong id="sleep-delta"></strong><span>years vs recommended sleep</span></div>
+          <div class="sleep-value"><strong id="sleep-delta"></strong><span>years vs 7–9 h</span></div>
         </div>
       </section>
 
@@ -73,6 +74,7 @@
         </div>
         <div class="editor-footer">
           <button id="save-reference" type="button">Use current as comparison</button>
+          <button id="swap-reference" type="button">Swap</button>
           <button id="reset" type="button">Reset</button>
         </div>
       </aside>

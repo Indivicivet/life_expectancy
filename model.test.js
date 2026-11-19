@@ -32,6 +32,14 @@ for (const sex of [0, 1]) {
   assert.ok(smokingDelta[0].risk < 0);
   assert.ok(smokingDelta[0].years < 0);
   smokingDelta.slice(1).forEach(row => near(row.risk, 0));
+  for (const factor of factors) {
+    for (const option of factor.options) {
+      if (!option.ci) continue;
+      const [lo, hi] = option.ci[sex];
+      assert.ok(lo <= option.years[sex] && option.years[sex] <= hi,
+        `${factor.id} ${option.label}: ${option.years[sex]} outside [${lo}, ${hi}]`);
+    }
+  }
   for (const selected of presets) {
     for (const reference of presets) {
       const rows = compare(selected.choices, reference.choices, sex);

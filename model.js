@@ -6,56 +6,56 @@ const factors = [
     id: "smoking", label: "Smoking", help: "Cigarettes per day for current smokers; time since quitting for former smokers.",
     options: [
       { label: "Never", years: [0, 0], hr: [1, 1] },
-      { label: "Quit >10 yr", years: [-1.4, -0.2], hr: [1.21, 1.03] },
-      { label: "Quit ≤10 yr", years: [-4.8, -0.9], hr: [1.87, 1.14] },
-      { label: "≤10/day", years: [-5.3, -5.0], hr: [2.02, 2.00] },
-      { label: ">10/day", years: [-9.4, -7.3], hr: [3.49, 2.75] },
+      { label: "Quit >10 yr", years: [-1.4, -0.2], hr: [1.21, 1.03], ci: [[-2.4, -0.3], [-1.9, 1.4]] },
+      { label: "Quit ≤10 yr", years: [-4.8, -0.9], hr: [1.87, 1.14], ci: [[-6.3, -3.3], [-3.2, 1.2]] },
+      { label: "≤10/day", years: [-5.3, -5.0], hr: [2.02, 2.00], ci: [[-7.1, -3.6], [-6.6, -3.2]] },
+      { label: ">10/day", years: [-9.4, -7.3], hr: [3.49, 2.75], ci: [[-10.6, -8.3], [-8.9, -6.0]] },
     ],
   },
   {
     id: "bmi", label: "BMI", help: "kg/m². Low BMI (<22.5) in cohorts often reflects illness-related weight loss.",
     options: [
       { label: "22.5–24.9", years: [0, 0], hr: [1, 1] },
-      { label: "<22.5", years: [-3.5, -2.1], hr: [1.61, 1.34] },
-      { label: "25–29.9", years: [-1.1, -0.6], hr: [1.16, 1.08] },
-      { label: "≥30", years: [-3.1, -3.2], hr: [1.51, 1.55] },
+      { label: "<22.5", years: [-3.5, -2.1], hr: [1.61, 1.34], ci: [[-5.1, -1.8], [-3.6, -0.5]] },
+      { label: "25–29.9", years: [-1.1, -0.6], hr: [1.16, 1.08], ci: [[-2.3, -0.1], [-2.3, 0.8]] },
+      { label: "≥30", years: [-3.1, -3.2], hr: [1.51, 1.55], ci: [[-4.4, -1.9], [-5.1, -1.8]] },
     ],
   },
   {
     id: "activity", label: "Physical activity", help: "Leisure activity (36 MET-h/wk ≈ 9 h of brisk walking). The low group still includes moderately active people.",
     options: [
       { label: "≥36 MET-h/wk", years: [0, 0], hr: [1, 1] },
-      { label: "<36 MET-h/wk", years: [-0.4, -1.1], hr: [1.05, 1.16] },
+      { label: "<36 MET-h/wk", years: [-0.4, -1.1], hr: [1.05, 1.16], ci: [[-1.2, 0.3], [-2.1, -0.05]] },
     ],
   },
   {
     id: "produce", label: "Fruit & vegetables", help: "Combined daily weight. The study split at its cohort median.",
     options: [
       { label: "≥200 g/day", years: [0, 0], hr: [1, 1] },
-      { label: "<200 g/day", years: [-1.3, -0.8], hr: [1.19, 1.11] },
+      { label: "<200 g/day", years: [-1.3, -0.8], hr: [1.19, 1.11], ci: [[-2.1, -0.4], [-1.9, 0.2]] },
     ],
   },
   {
     id: "meat", label: "Red & processed meat", help: "Combined daily weight of red and processed meat.",
     options: [
       { label: "<120 g/day", years: [0, 0], hr: [1, 1] },
-      { label: "≥120 g/day", years: [-1.4, -2.4], hr: [1.21, 1.40] },
+      { label: "≥120 g/day", years: [-1.4, -2.4], hr: [1.21, 1.40], ci: [[-2.2, -0.6], [-3.9, -1.0]] },
     ],
   },
   {
     id: "alcohol", label: "Alcohol", help: "Lifetime daily average (1 drink = 12 g ethanol, 1.5 UK units). Women's 0.6–1/day estimate was not statistically significant.",
     options: [
       { label: ["≤2 drinks/day", "≤0.5 drinks/day"], years: [0, 0], hr: [1, 1] },
-      { label: ["2.1–4/day", "0.6–1/day"], years: [-1.7, 1.0], hr: [1.24, 0.86] },
-      { label: [">4/day", ">1/day"], years: [-3.1, -1.0], hr: [1.50, 1.15] },
+      { label: ["2.1–4/day", "0.6–1/day"], years: [-1.7, 1.0], hr: [1.24, 0.86], ci: [[-2.7, -0.8], [-0.3, 2.6]] },
+      { label: [">4/day", ">1/day"], years: [-3.1, -1.0], hr: [1.50, 1.15], ci: [[-4.0, -1.9], [-2.4, 0.3]] },
     ],
   },
 ];
 
 const baselineYears = [47.5, 48.7];
 const presets = [
-  { id: "example", label: "Mixed A", choices: [0, 2, 0, 1, 0, 1] },
-  { id: "comparison", label: "Mixed B", choices: [3, 0, 1, 0, 1, 0] },
+  { id: "example", label: "Overweight, active", choices: [0, 2, 0, 1, 0, 1] },
+  { id: "comparison", label: "Light smoker, lean", choices: [3, 0, 1, 0, 1, 0] },
   { id: "reference", label: "Study reference", choices: [0, 0, 0, 0, 0, 0] },
   { id: "higher", label: "Higher risk", choices: [4, 3, 1, 1, 1, 2] },
 ];

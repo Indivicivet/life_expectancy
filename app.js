@@ -37,14 +37,15 @@ function element(tag, className, text) {
 }
 
 function buttons(container, options, selected, onSelect) {
-  container.replaceChildren(...options.map(({ label, id }) => {
+  container.replaceChildren(...options.map(({ label, id, title }) => {
     const button = element("button", "", label);
     button.type = "button";
     button.dataset.value = id;
+    if (title) button.title = title;
     button.setAttribute("aria-pressed", String(selected === id));
     button.addEventListener("click", () => {
       onSelect(id);
-      render();
+      render(true);
     });
     return button;
   }));
@@ -56,14 +57,64 @@ function setPressed(container, selected) {
   }
 }
 
+function findPreset(profile) {
+  return presets.find(preset => preset.choices.every((value, i) => profile[i] === value));
+}
+
 function referenceProfile() {
   if (referenceId === "custom") return customReference;
   return presets.find(preset => preset.id === referenceId).choices;
 }
 
+function parseProfile(text) {
+  if (!text || text.length !== factors.length) return null;
+  const parsed = [...text].map(Number);
+  return parsed.every((value, i) => Number.isInteger(value) && value >= 0 && value < factors[i].options.length)
+    ? parsed : null;
+}
+
+function readHash() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const parsedChoices = parseProfile(params.get("c"));
+  if (parsedChoices) choices = parsedChoices;
+  const s = Number(params.get("s"));
+  if (params.has("s") && (s === 0 || s === 1)) sex = s;
+  const m = params.get("m");
+  if (metrics.some(item => item.id === m)) metric = m;
+  const sl = Number(params.get("sl"));
+  if (params.has("sl") && Number.isInteger(sl) && sl >= 0 && sl < sleepOptions.length) sleep = sl;
+  const r = params.get("r");
+  const parsedRef = parseProfile(params.get("cr"));
+  if (r === "custom" && parsedRef) {
+    customReference = parsedRef;
+    referenceId = "custom";
+  } else if (presets.some(preset => preset.id === r)) {
+    referenceId = r;
+  }
+}
+
+function writeHash() {
+  const params = new URLSearchParams({
+    s: String(sex),
+    c: choices.join(""),
+    r: referenceId,
+    m: metric,
+    sl: String(sleep),
+  });
+  if (referenceId === "custom" && customReference) params.set("cr", customReference.join(""));
+  history.replaceState(null, "", "#" + params.toString());
+}
+
+function optionTitle(option, sexIndex) {
+  if (!option.ci) return "Study reference category (0.0 yr)";
+  const [lo, hi] = option.ci[sexIndex];
+  return `vs study reference: ${signed(option.years[sexIndex])} yr (95% CI: ${signed(lo)} to ${signed(hi)})`;
+}
+
 function renderInputs() {
   byId("inputs").replaceChildren(...factors.map((factor, i) => {
     const section = element("section", "editor-section");
+    section.id = "section-" + factor.id;
     const header = element("div", "editor-title");
     const label = element("span", "", factor.label);
     const impact = element("span", "field-impact");
@@ -74,7 +125,7 @@ function renderInputs() {
     row.setAttribute("role", "group");
     row.setAttribute("aria-label", factor.label);
     buttons(row, factor.options.map((option, index) => ({
-      id: index, label: optionLabel(option, sex),
+      id: index, label: optionLabel(option, sex), title: optionTitle(option, sex),
     })), choices[i], index => { choices[i] = index; });
     section.append(header, row, element("p", "help", factor.help));
     return section;
@@ -103,6 +154,15 @@ function renderChart(contributions, reference) {
     const row = contributions[i];
     const value = row[metric];
     const label = element("div", "factor-label", factor.label);
+    label.title = "Jump to " + factor.label;
+    label.addEventListener("click", () => {
+      const target = byId("section-" + factor.id);
+      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      target.classList.remove("flash");
+      void target.offsetWidth;
+      target.classList.add("flash");
+      setTimeout(() => target.classList.remove("flash"), 700);
+    });
     const before = optionLabel(factor.options[reference[i]], sex);
     const after = optionLabel(factor.options[choices[i]], sex);
     label.append(element("small", "", before === after ? after : before + " → " + after));
@@ -128,13 +188,15 @@ function setDelta(id, value, digits = 1) {
   node.className = tone(value, digits);
 }
 
-function render() {
+function render(syncHash = false) {
   const reference = referenceProfile();
   const years = lifeExpectancy(choices, sex);
   const comparisonYears = lifeExpectancy(reference, sex);
   const risk = mortalityRisk(choices, sex);
   const comparisonRisk = mortalityRisk(reference, sex);
   const contributions = compare(choices, reference, sex);
+  const matching = findPreset(choices);
+  byId("your-label").textContent = matching ? matching.label : "Custom lifestyle";
   byId("your-age").textContent = (40 + years).toFixed(1);
   byId("reference-age").textContent = (40 + comparisonYears).toFixed(1);
   byId("your-risk").textContent = risk.toFixed(1) + " millimorts / 10 yr";
@@ -143,6 +205,7 @@ function render() {
     presets.find(preset => preset.id === referenceId).label;
   setDelta("years-delta", years - comparisonYears);
   setDelta("risk-delta", comparisonRisk - risk);
+  setDelta("microlives-delta", 48 * (years - comparisonYears) / comparisonYears);
   setDelta("sleep-delta", sleepOptions[sleep].years);
   const sleepImpact = byId("sleep-impact");
   sleepImpact.textContent = signed(sleepOptions[sleep].years) + " yr vs recommended";
@@ -159,8 +222,8 @@ function render() {
   setPressed(byId("metric-options"), metric);
   setPressed(byId("sex-options"), sex);
   setPressed(byId("sleep-options"), sleep);
-  const matching = presets.find(preset => preset.choices.every((value, i) => choices[i] === value));
   setPressed(byId("preset-options"), matching?.id);
+  if (syncHash) writeHash();
 }
 
 function renderReferenceButtons() {
@@ -168,6 +231,7 @@ function renderReferenceButtons() {
     id => { referenceId = id; });
 }
 
+readHash();
 buttons(byId("sex-options"), [{ label: "Men", id: 0 }, { label: "Women", id: 1 }], sex, id => {
   sex = id;
   renderInputs();
@@ -181,10 +245,28 @@ buttons(byId("sleep-options"), sleepOptions.map((option, id) => ({ ...option, id
 renderReferenceButtons();
 renderInputs();
 byId("save-reference").addEventListener("click", () => {
-  customReference = [...choices];
-  referenceId = "custom";
+  const matching = findPreset(choices);
+  if (matching) {
+    referenceId = matching.id;
+  } else {
+    customReference = [...choices];
+    referenceId = "custom";
+  }
   renderReferenceButtons();
-  render();
+  render(true);
+});
+byId("swap-reference").addEventListener("click", () => {
+  const oldChoices = [...choices];
+  choices = [...referenceProfile()];
+  const matching = findPreset(oldChoices);
+  if (matching) {
+    referenceId = matching.id;
+  } else {
+    customReference = oldChoices;
+    referenceId = "custom";
+  }
+  renderReferenceButtons();
+  render(true);
 });
 byId("reset").addEventListener("click", () => {
   choices = [...initial];
@@ -193,9 +275,10 @@ byId("reset").addEventListener("click", () => {
   customReference = null;
   metric = "risk";
   sleep = 1;
+  history.replaceState(null, "", window.location.pathname + window.location.search);
   renderReferenceButtons();
   renderInputs();
-  render();
+  render(false);
 });
 document.querySelector(".topbar a").addEventListener("click", () => { byId("sources").open = true; });
-render();
+render(false);
