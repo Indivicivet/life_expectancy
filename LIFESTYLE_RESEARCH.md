@@ -153,11 +153,11 @@ Two units/day lies in the low-volume category, whose estimates are not
 statistically distinguishable from neutral mortality in either sex.
 This is consistent with little net change at that dose but does not prove
 that the first two units each day are harmless. The analysis does not
-resolve differences between doses within each group. Avoid interpreting
-point estimates below one as life extension: a neutral RR of 1 is a
-defensible modelling assumption for these inconclusive protective
-associations, rather than an estimate directly reported by the study.
-The observed risk increases with dose, especially for women. The paper
+resolve differences between doses within each group. The calculator retains
+the published central estimates, including those below one, and displays
+their uncertainty. An estimated association with lower mortality is not
+proof that drinking extends life. Above the low-volume category, the
+observed risk increases with dose, especially for women. The paper
 reports an elevated RR for former drinkers (1.39 for men, 1.27 for women);
 zero current consumption does not erase previous exposure or any disease
 that prompted quitting.
@@ -272,7 +272,11 @@ ten-year cumulative death probability as a lifetime risk.
 - Individual confidence intervals describe statistical uncertainty in the
   estimates, not the whole range of a person's future lifespan. A combined
   confidence interval cannot be recovered by adding marginal limits;
-  the estimates are correlated.
+  the estimates are correlated. The calculator displays the original
+  95% confidence intervals and conditional ranges for factor comparisons
+  derived from their endpoints. These ranges do not capture uncertainty
+  in the model baseline, the joint distribution or the transfer between
+  study populations. See [MAGIC_NUMBERS.md](MAGIC_NUMBERS.md).
 - For external corroboration, [Lo et al., 2024](https://doi.org/10.2196/57045)
   estimated 7.13 additional years (95% CI 1.33–11.11) for Taiwanese adults
   adhering to all five studied healthy lifestyle factors versus zero or

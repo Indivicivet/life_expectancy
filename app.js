@@ -101,10 +101,22 @@ function writeHash() {
   history.replaceState(null, "", "#" + params.toString());
 }
 
-function optionTitle(option, sexIndex) {
-  if (!option.ci) return `Estimated vs model reference: ${signed(optionYears(option, sexIndex))} yr`;
-  const [lo, hi] = option.ci[sexIndex];
-  return `vs study reference: ${signed(option.years[sexIndex])} yr (95% CI: ${signed(lo)} to ${signed(hi)})`;
+function sourceEstimate(factor, option, sexIndex) {
+  const kind = factor.id === "activity" || factor.id === "alcohol" ? "RR" : "HR";
+  const reference = factor.id === "activity" ? "inactivity" :
+    factor.id === "alcohol" ? "lifetime abstainers" : "study reference";
+  const estimate = `${kind} vs ${reference}: ${option.hr[sexIndex].toFixed(2)}`;
+  if (!option.hrCI) return estimate + " (interpolated; CI unavailable)";
+  const [lo, hi] = option.hrCI[sexIndex];
+  return estimate + (lo === hi ? " (reference)" : ` (95% CI ${lo.toFixed(2)}–${hi.toFixed(2)})`);
+}
+
+function optionTitle(factor, option, sexIndex) {
+  const years = `Estimated vs model reference: ${signed(optionYears(factor, option, sexIndex))} yr`;
+  const range = optionYearsRange(factor, option, sexIndex);
+  const interval = range && range[0] !== range[1]
+    ? ` (${option.yearsCI ? "95% CI" : "model range"}: ${signed(range[0])} to ${signed(range[1])} yr)` : "";
+  return sourceEstimate(factor, option, sexIndex) + "\n" + years + interval;
 }
 
 function renderInputs() {
@@ -121,16 +133,19 @@ function renderInputs() {
     row.setAttribute("role", "group");
     row.setAttribute("aria-label", factor.label);
     buttons(row, factor.options.map((option, index) => ({
-      id: index, label: option.label, title: optionTitle(option, sex),
+      id: index, label: option.label, title: optionTitle(factor, option, sex),
     })), choices[i], index => { choices[i] = index; });
-    section.append(header, row, element("p", "help", factor.help));
+    const estimate = element("p", "help source-estimate");
+    estimate.id = "estimate-" + factor.id;
+    section.append(header, row, element("p", "help", factor.help), estimate);
     return section;
   }));
 }
 
 function renderChart(contributions, reference) {
   const display = metrics.find(item => item.id === metric);
-  const max = Math.max(1, ...contributions.map(row => Math.abs(row[metric])));
+  const max = Math.max(1, ...contributions.flatMap(row =>
+    [row[metric], ...(row.ranges[metric] ?? [])].map(Math.abs)));
   const magnitude = 10 ** Math.floor(Math.log10(max));
   const scale = [1, 2, 2.5, 5, 10].find(n => n * magnitude >= max) * magnitude;
   const chart = element("div", "chart-grid");
@@ -170,12 +185,25 @@ function renderChart(contributions, reference) {
     track.title = factor.label + ": " + signed(value, display.digits) + " " + display.unit;
     track.append(bar);
     const number = element("div", "bar-number " + tone(value), signed(value, display.digits));
+    const range = row.ranges[metric];
+    if (range && range[0] !== range[1]) {
+      const whisker = element("div", "range-whisker");
+      whisker.style.left = 50 + range[0] * 50 / scale + "%";
+      whisker.style.width = (range[1] - range[0]) * 50 / scale + "%";
+      const bounds = signed(range[0], display.digits) + " to " + signed(range[1], display.digits);
+      track.title += `; source-limit range: ${bounds} ${display.unit}`;
+      track.append(whisker);
+      number.append(element("small", "range-text", bounds));
+    } else if (!range) {
+      number.append(element("small", "range-text", "Range unavailable"));
+    }
     if (metric !== "years") number.append(element("small", "", signed(row.years) + " yr"));
     else number.append(element("small", "", signed(row.risk) + " mmt"));
     chart.append(label, track, number);
   }
   byId("chart").replaceChildren(chart);
-  byId("chart-note").textContent = display.note;
+  byId("chart-note").textContent = display.note +
+    " Whiskers show ranges derived from source 95% confidence limits, holding the other factors fixed. They are not joint confidence intervals.";
 }
 
 function setDelta(id, value, digits = 1) {
@@ -209,6 +237,7 @@ function render(syncHash = false) {
     const value = contributions[i].years;
     impact.textContent = signed(value) + " yr";
     impact.className = "field-impact " + tone(value);
+    byId("estimate-" + factor.id).textContent = sourceEstimate(factor, factor.options[choices[i]], sex);
   }
   setPressed(byId("reference-options"), referenceId);
   setPressed(byId("metric-options"), metric);

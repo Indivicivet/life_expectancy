@@ -63,7 +63,7 @@ h1, h2 { margin: 0; font-size: 1rem; }
 .chart-toolbar h2 { font-size: .96rem; }
 .chart-grid {
   display: grid;
-  grid-template-columns: minmax(94px, 1.05fr) minmax(0, 2.7fr) minmax(78px, .9fr);
+  grid-template-columns: minmax(94px, 1.05fr) minmax(0, 2.7fr) minmax(98px, .9fr);
   align-items: center;
   column-gap: 8px;
   row-gap: 9px;
@@ -82,8 +82,13 @@ h1, h2 { margin: 0; font-size: 1rem; }
 .bar { position: absolute; top: 4px; bottom: 4px; border-radius: 3px; min-width: 0; }
 .bar.gain { background: var(--gain); }
 .bar.loss { background: var(--loss); }
+.range-whisker { position: absolute; top: 50%; height: 2px; background: var(--ink); z-index: 1; transform: translateY(-50%); }
+.range-whisker::before, .range-whisker::after { content: ""; position: absolute; top: -4px; height: 10px; border-left: 2px solid var(--ink); }
+.range-whisker::before { left: 0; }
+.range-whisker::after { right: 0; }
 .bar-number { text-align: right; font-variant-numeric: tabular-nums; font-size: .9rem; font-weight: 700; white-space: nowrap; }
 .bar-number small { font-size: .71rem; color: var(--muted); font-weight: 400; display: block; }
+.bar-number .range-text { white-space: normal; }
 .editor { padding: 10px 12px; }
 .editor-heading { justify-content: space-between; }
 .editor-heading h2 { font-size: 1.05rem; }
@@ -93,6 +98,7 @@ h1, h2 { margin: 0; font-size: 1rem; }
 .editor-title { font-weight: 700; justify-content: space-between; margin-bottom: 5px; }
 .field-impact { font-size: .8rem; font-variant-numeric: tabular-nums; font-weight: 650; }
 .help { margin-top: 5px; font-size: .79rem; line-height: 1.3; }
+.source-estimate { font-variant-numeric: tabular-nums; }
 .editor-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px; padding-top: 10px; }
 .editor-footer button { font-size: .83rem; }
 .sources { margin-top: 12px; }
@@ -109,7 +115,7 @@ h1, h2 { margin: 0; font-size: 1rem; }
   .wrap { width: calc(100% - 14px); margin-block: 7px; }
   .analysis { padding: 10px; }
   .topbar a { margin-left: 0; }
-  .chart-grid { grid-template-columns: minmax(83px, 1fr) minmax(0, 2fr) minmax(62px, .8fr); column-gap: 5px; }
+  .chart-grid { grid-template-columns: minmax(83px, 1fr) minmax(0, 2fr) minmax(82px, .9fr); column-gap: 5px; }
   .delta-summary strong { font-size: 1.25rem; }
   .delta-summary span { font-size: .7rem; }
   .bar-number { font-size: .8rem; }
