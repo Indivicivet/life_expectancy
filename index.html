@@ -13,7 +13,7 @@
   <main class="wrap">
     <header class="topbar">
       <h1>Life expectancy calculator</h1>
-      <span>Age 40 · Cohort-based estimates</span>
+      <span id="current-age-label">Cohort-based estimates</span>
       <a href="#sources">Method &amp; sources</a>
     </header>
     <noscript><p>Enable JavaScript to use this calculator.</p></noscript>
@@ -28,12 +28,14 @@
             <span id="your-label" class="result-label">Selected lifestyle</span>
             <strong id="your-age" class="big-number"></strong>
             <span>estimated age at death</span>
+            <span id="your-remaining"></span>
             <span id="your-risk" class="risk-number"></span>
           </section>
           <section class="reference">
             <span id="reference-label" class="result-label">Comparison</span>
             <strong id="reference-age" class="big-number"></strong>
             <span>estimated age at death</span>
+            <span id="reference-remaining"></span>
             <span id="reference-risk" class="risk-number"></span>
           </section>
         </div>
@@ -42,7 +44,7 @@
           <div><strong id="risk-delta"></strong><span>millimorts avoided / 10 yr</span></div>
           <div><strong id="microlives-delta"></strong><span>microlives / day</span></div>
         </div>
-        <p class="note">Combined estimates from observational studies, anchored to EPIC-Heidelberg at age 40. No joint confidence interval is available.</p>
+        <p class="note">Conditional on reaching your selected age. Cohort-based estimates anchored at age 40; extrapolation to other ages is uncertain. No joint confidence interval is available.</p>
         <div class="chart-toolbar">
           <h2>Difference by factor</h2>
           <div class="choices" id="metric-options" role="group" aria-label="Chart metric"></div>
@@ -55,6 +57,11 @@
         <div class="editor-heading">
           <h2>Your lifestyle</h2>
           <div class="choices" id="sex-options" role="group" aria-label="Study sex category"></div>
+        </div>
+        <div class="editor-section age-section">
+          <div class="editor-title"><label for="age-number">Current age (years)</label></div>
+          <div id="age-controls" class="numeric-choices" role="group" aria-label="Current age"></div>
+          <p class="help">Both lifestyles are compared at this age, with 10-year risk measured from today.</p>
         </div>
         <div class="preset-row">
           <div id="preset-options" class="choices" role="group" aria-label="Load example lifestyle"></div>
@@ -70,11 +77,11 @@
     <details id="sources" class="panel sources">
       <summary>Method &amp; sources</summary>
       <div class="source-content">
-        <p>The baseline and four factors come from EPIC-Heidelberg, a German cohort of 22,469 adults. Activity, alcohol and sleep use mortality estimates from later meta-analyses, converted to life years using the same reconstructed mortality curve. Combining these studies assumes independent effects; the combined estimates have not been validated. Presets are examples, not population averages.</p>
+        <p>The baseline and four factors come from EPIC-Heidelberg, a German cohort of 22,469 adults. All seven factors modify the same reconstructed mortality curve, integrated from the user's current age to 110. The curve is calibrated at age 40 and extrapolation outside the cohort's observed ages is especially uncertain. Combining studies assumes independent effects; the combined estimates have not been validated. Presets are examples, not population averages.</p>
         <p>A millimort is a 1-in-1,000 chance of death; the 10-year figures use the reconstructed EPIC mortality curve and the selected mortality multipliers. A microlife is 30 minutes of expected life, spread across the comparison group's remaining years.</p>
-        <p>These are observational associations, not causal predictions or medical advice. Alcohol uses the published mortality estimates, even when their confidence intervals include no effect. Low-dose estimates do not establish benefit or safety. Long sleep and low BMI may reflect underlying illness.</p>
-        <p>RR is relative risk; HR is hazard ratio. The lifestyle editor shows original study estimates and 95% confidence intervals where reported. Chart whiskers show how each comparison changes at its source interval endpoints with all other effects and the baseline held fixed. Interpolated activity levels have no published interval. The whiskers cannot be added to obtain a confidence interval for the total.</p>
-        <p><a href="https://doi.org/10.1186/1741-7015-12-59">EPIC-Heidelberg (2014)</a> · <a href="https://doi.org/10.1136/bjsports-2022-105669">Activity (2023)</a> · <a href="https://doi.org/10.1001/jamanetworkopen.2023.6185">Alcohol (2023)</a> · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12181477/">Sleep (2025)</a> · <a href="https://doi.org/10.1136/bmj.e8223">Microlives (2012)</a></p>
+        <p>These are observational associations, not causal predictions or medical advice. Alcohol uses the continuous, pooled 2006 fit for studies excluding former and light drinkers from the abstainer reference. Newer 2023 sex-specific estimates are shown separately and suggest substantially less low-dose protection. Neither establishes causal benefit or safety. Long sleep and low BMI may reflect underlying illness.</p>
+        <p>RR is relative risk; HR is hazard ratio. The lifestyle editor shows study estimates and source 95% confidence intervals where reported. Alcohol uses an estimated coefficient-limit sensitivity range because coefficient covariance was not published. Chart whiskers vary the source limits with all other effects and the baseline held fixed. Interpolated activity levels have no published interval. Whiskers cannot be added to obtain a confidence interval for the total.</p>
+        <p><a href="https://doi.org/10.1186/1741-7015-12-59">EPIC-Heidelberg (2014)</a> · <a href="https://doi.org/10.1136/bjsports-2022-105669">Activity (2023)</a> · <a href="https://doi.org/10.1001/archinte.166.22.2437">Alcohol curve (2006)</a> · <a href="https://doi.org/10.1001/jamanetworkopen.2023.6185">Alcohol categories (2023)</a> · <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12181477/">Sleep (2025)</a> · <a href="https://doi.org/10.1136/bmj.e8223">Microlives (2012)</a></p>
         <p><a href="LIFESTYLE_RESEARCH.md">Research, effect sizes and limitations</a> · <a href="MAGIC_NUMBERS.md">Calculations and assumptions</a> · <a href="README.md">About this project</a></p>
       </div>
     </details>

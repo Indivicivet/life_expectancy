@@ -45,6 +45,9 @@ h1, h2 { margin: 0; font-size: 1rem; }
 .compare-toolbar { font-size: .86rem; color: var(--muted); justify-content: center; }
 .choices { display: flex; flex-wrap: wrap; gap: 4px; }
 .choices button { padding-inline: 8px; font-size: .86rem; }
+.numeric-choices { display: flex; align-items: center; gap: 8px; }
+.numeric-slider { flex: 1; min-width: 0; accent-color: var(--accent); }
+.numeric-value { width: 5.3em; min-height: 36px; border: 1px solid #becbc0; border-radius: 5px; padding: 4px 7px; font: inherit; color: var(--ink); background: #fff; }
 .results { display: grid; grid-template-columns: 1fr 1fr; margin: 18px 0 12px; }
 .results section { display: grid; justify-items: center; gap: 2px; text-align: center; color: var(--muted); font-size: .85rem; }
 .results section + section { border-left: 1px solid var(--border); }

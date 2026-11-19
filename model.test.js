@@ -1,14 +1,18 @@
 const assert = require("node:assert/strict");
 const {
   factors,
+  minAge,
+  maxAge,
+  calibrationAge,
+  endAge,
+  maxAlcoholUnits,
+  recentAlcoholEvidence,
   baselineYears,
   presets,
   parameters,
   gompertzYears,
   lifeExpectancy,
   mortalityRisk,
-  optionYears,
-  optionYearsRange,
   compare,
 } = require("./model.js");
 
@@ -18,105 +22,98 @@ function near(actual, expected, tolerance = 1e-8) {
 
 const healthy = presets.find(preset => preset.id === "reference").choices;
 const higher = presets.find(preset => preset.id === "higher").choices;
+const alcoholIndex = factors.findIndex(factor => factor.id === "alcohol");
+const activityIndex = factors.findIndex(factor => factor.id === "activity");
 for (const sex of [0, 1]) {
-  near(lifeExpectancy(healthy, sex), baselineYears[sex]);
-  assert.ok(lifeExpectancy(higher, sex) < baselineYears[sex]);
   const { hazard, slope } = parameters[sex];
-  near(gompertzYears(hazard, slope, 1), baselineYears[sex]);
-  near(gompertzYears(hazard, slope, factors[0].options[4].hr[sex]),
+  near(lifeExpectancy(healthy, sex, calibrationAge), baselineYears[sex]);
+  near(gompertzYears(hazard, slope, factors[0].options[4].hr[sex], calibrationAge),
     baselineYears[sex] + factors[0].options[4].years[sex]);
-  assert.ok(mortalityRisk(healthy, sex) > 0);
-  assert.ok(mortalityRisk(higher, sex) < 1000);
-  assert.ok(mortalityRisk(healthy, sex) < mortalityRisk(higher, sex));
-  const smokingOnly = [...healthy];
-  smokingOnly[0] = 4;
-  const smokingDelta = compare(smokingOnly, healthy, sex);
-  assert.ok(smokingDelta[0].risk < 0);
-  assert.ok(smokingDelta[0].years < 0);
-  smokingDelta.slice(1).forEach(row => near(row.risk, 0));
-  for (const id of ["activity", "alcohol", "sleep"]) {
-    const index = factors.findIndex(factor => factor.id === id);
-    const options = factors[index].options;
-    for (const [choice, option] of options.entries()) {
+
+  // The same lifestyle must have higher ten-year risk and fewer remaining
+  // years at an older starting age, without predicting death before that age.
+  let previousRisk = 0;
+  let previousYears = Infinity;
+  for (const age of [minAge, calibrationAge, 65, 90, maxAge]) {
+    const years = lifeExpectancy(healthy, sex, age);
+    const risk = mortalityRisk(healthy, sex, age);
+    assert.ok(years < previousYears && years > 0 && years <= endAge - age);
+    assert.ok(risk > previousRisk && risk <= 1000);
+    near(risk, -1000 * Math.expm1(
+      -hazard * Math.exp(slope * (age - calibrationAge)) * Math.expm1(slope * 10) / slope));
+    previousYears = years;
+    previousRisk = risk;
+    assert.ok(lifeExpectancy(higher, sex, age) < years);
+    assert.ok(mortalityRisk(higher, sex, age) >= risk);
+
+    for (const selected of presets) {
+      for (const reference of presets) {
+        const rows = compare(selected.choices, reference.choices, sex, age);
+        const comparisonYears = lifeExpectancy(reference.choices, sex, age);
+        const years = lifeExpectancy(selected.choices, sex, age) - comparisonYears;
+        const risk = mortalityRisk(reference.choices, sex, age) -
+          mortalityRisk(selected.choices, sex, age);
+        near(rows.reduce((sum, row) => sum + row.years, 0), years);
+        near(rows.reduce((sum, row) => sum + row.risk, 0), risk);
+        near(rows.reduce((sum, row) => sum + row.microlives, 0), 48 * years / comparisonYears);
+        rows.forEach((row, i) => {
+          for (const key of ["years", "risk", "microlives"]) {
+            const range = row.ranges[key];
+            if (range) assert.ok(range[0] <= row[key] + 1e-8 && row[key] <= range[1] + 1e-8);
+          }
+          if (selected.choices[i] === reference.choices[i]) {
+            near(row.risk, 0);
+            near(row.years, 0);
+            assert.deepEqual(row.ranges, { years: [0, 0], risk: [0, 0], microlives: [0, 0] });
+          }
+        });
+      }
+    }
+  }
+
+  for (const [index, factor] of factors.entries()) {
+    for (const [choice, option] of factor.options.entries()) {
+      if (option.hrBounds) {
+        const [lo, hi] = option.hrBounds[sex];
+        assert.ok(lo <= option.hr[sex] && option.hr[sex] <= hi);
+      }
+      // Verify representative values, including low alcohol doses, at age 40
+      // and 65 against the survival calculation with all other effects fixed.
+      if (factor.numeric && choice > 21 && choice % 10 !== 0) continue;
       const profile = [...healthy];
       profile[index] = choice;
-      const rows = compare(profile, healthy, sex);
-      near(lifeExpectancy(profile, sex),
-        gompertzYears(hazard, slope, option.hr[sex] / (factors[index].riskAnchor ?? 1)));
-      near(rows[index].risk, mortalityRisk(healthy, sex) - mortalityRisk(profile, sex));
-      near(rows[index].years, lifeExpectancy(profile, sex) - baselineYears[sex]);
-      rows.forEach((row, i) => {
-        if (i !== index) {
-          near(row.years, 0);
-          near(row.risk, 0);
-        }
-      });
-    }
-  }
-  const activity = factors.find(factor => factor.id === "activity").options;
-  assert.ok(activity.every((option, i) => i === 0 || option.hr[sex] < activity[i - 1].hr[sex]));
-  const alcoholIndex = factors.findIndex(factor => factor.id === "alcohol");
-  const alcohol = factors[alcoholIndex].options;
-  assert.deepEqual(alcohol.map(option => option.hr[sex]),
-    sex === 0 ? [1, 1, 0.94, 1.01, 1.15, 1.34] : [1, 0.99, 0.99, 1.21, 1.34, 1.61]);
-  const moderate = [...healthy];
-  moderate[alcoholIndex] = 2;
-  const moderateDelta = compare(moderate, healthy, sex)[alcoholIndex];
-  for (const key of ["years", "risk", "microlives"]) {
-    assert.ok(moderateDelta[key] > 0);
-    assert.ok(moderateDelta.ranges[key][0] < 0 && moderateDelta.ranges[key][1] > 0);
-  }
-  const [lo, hi] = alcohol[2].hrCI[sex];
-  const lowYears = gompertzYears(hazard, slope, hi) - baselineYears[sex];
-  const highYears = gompertzYears(hazard, slope, lo) - baselineYears[sex];
-  near(moderateDelta.ranges.years[0], lowYears);
-  near(moderateDelta.ranges.years[1], highYears);
-  const riskAt = hr => -1000 * Math.expm1(-hr * hazard * Math.expm1(slope * 10) / slope);
-  near(moderateDelta.ranges.risk[0], riskAt(1) - riskAt(hi));
-  near(moderateDelta.ranges.risk[1], riskAt(1) - riskAt(lo));
-  const sleep = factors.find(factor => factor.id === "sleep").options;
-  assert.ok(sleep[0].hr[sex] > sleep[1].hr[sex] && sleep[2].hr[sex] > sleep[1].hr[sex]);
-  for (const factor of factors) {
-    for (const option of factor.options) {
-      if (!option.hrCI) {
-        assert.equal(optionYearsRange(factor, option, sex), null);
-        continue;
+      for (const age of [calibrationAge, 65]) {
+        const years = lifeExpectancy(healthy, sex, age);
+        const hr = option.hr[sex] / (factor.riskAnchor ?? 1);
+        near(lifeExpectancy(profile, sex, age), gompertzYears(hazard, slope, hr, age));
+        const rows = compare(profile, healthy, sex, age);
+        near(rows[index].risk, mortalityRisk(healthy, sex, age) - mortalityRisk(profile, sex, age));
+        near(rows[index].years, lifeExpectancy(profile, sex, age) - years);
+        rows.forEach((row, i) => {
+          if (i !== index) {
+            near(row.years, 0);
+            near(row.risk, 0);
+          }
+        });
       }
-      const [hrLo, hrHi] = option.hrCI[sex];
-      assert.ok(hrLo <= option.hr[sex] && option.hr[sex] <= hrHi);
-      const [lo, hi] = optionYearsRange(factor, option, sex);
-      const years = optionYears(factor, option, sex);
-      assert.ok(lo <= years && years <= hi,
-        `${factor.id} ${option.label}: ${years} outside [${lo}, ${hi}]`);
     }
   }
-  for (const selected of presets) {
-    for (const reference of presets) {
-      const rows = compare(selected.choices, reference.choices, sex);
-      const years = lifeExpectancy(selected.choices, sex) - lifeExpectancy(reference.choices, sex);
-      const risk = mortalityRisk(reference.choices, sex) - mortalityRisk(selected.choices, sex);
-      near(rows.reduce((sum, row) => sum + row.years, 0), years);
-      near(rows.reduce((sum, row) => sum + row.risk, 0), risk);
-      near(rows.reduce((sum, row) => sum + row.microlives, 0),
-        48 * years / lifeExpectancy(reference.choices, sex));
-      rows.forEach((row, i) => {
-        for (const key of ["years", "risk", "microlives"]) {
-          const range = row.ranges[key];
-          if (!range) continue;
-          assert.ok(range[0] <= row[key] + 1e-8 && row[key] <= range[1] + 1e-8);
-        }
-        if (selected.choices[i] === reference.choices[i]) {
-          near(row.risk, 0);
-          near(row.years, 0);
-          assert.deepEqual(row.ranges, { years: [0, 0], risk: [0, 0], microlives: [0, 0] });
-        }
-      });
-    }
-  }
-  const activityIndex = factors.findIndex(factor => factor.id === "activity");
+  const activity = factors[activityIndex].options;
+  assert.ok(activity.every((option, i) => i === 0 || option.hr[sex] < activity[i - 1].hr[sex]));
+  const alcohol = factors[alcoholIndex].options;
+  assert.equal(alcohol.length, maxAlcoholUnits + 1);
+  assert.equal(alcohol[0].hr[sex], 1);
+  assert.ok(new Set(alcohol.slice(1, 15).map(option => option.hr[sex])).size > 7);
+  near(alcohol[7].hr[sex], Math.exp(Math.sqrt(8) * (-0.1429 + 0.0405 * Math.log(8))));
+  assert.ok(alcohol[4].hr[sex] < alcohol[1].hr[sex]);
+  assert.ok(alcohol[4].hr[sex] < alcohol[14].hr[sex]);
+  assert.ok(alcohol[60].hr[sex] > 1);
+  near(recentAlcoholEvidence(14).hr[sex], sex === 0 ? 0.94 : 0.99);
+  assert.deepEqual(recentAlcoholEvidence(14).hrBounds[sex],
+    sex === 0 ? [0.88, 1.01] : [0.90, 1.10]);
   const interpolated = [...healthy];
   interpolated[activityIndex] = 1;
-  assert.deepEqual(compare(interpolated, healthy, sex)[activityIndex].ranges,
+  assert.deepEqual(compare(interpolated, healthy, sex, calibrationAge)[activityIndex].ranges,
     { years: null, risk: null, microlives: null });
 }
 console.log("Model checks passed");

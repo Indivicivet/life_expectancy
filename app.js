@@ -2,6 +2,7 @@ const byId = id => document.getElementById(id);
 const initial = presets[0].choices;
 let choices = [...initial];
 let sex = 0;
+let age = calibrationAge;
 let referenceId = "comparison";
 let customReference = null;
 let metric = "risk";
@@ -12,7 +13,7 @@ const metrics = [
     note: "Millimorts avoided over 10 years, Shapley-allocated so bars sum to the total. Negative means higher risk." },
   { id: "years", label: "Life years", unit: "years", digits: 1,
     left: "Years lost", right: "Years gained",
-    note: "Estimated life-expectancy differences; their sum matches the total above." },
+    note: "Life-expectancy differences, Shapley-allocated so the bars sum to the total." },
   { id: "microlives", label: "Microlives/day", unit: "µlives/day", digits: 1,
     left: "Time lost", right: "Time gained",
     note: "1 microlife = 30 minutes of expected life, spread over the comparison group's remaining years." },
@@ -56,6 +57,44 @@ function setPressed(container, selected) {
   }
 }
 
+function numberControls(container, id, label, min, max, value, onSelect) {
+  const slider = element("input", "numeric-slider");
+  const number = element("input", "numeric-value");
+  slider.type = "range";
+  number.type = "number";
+  slider.id = id + "-range";
+  number.id = id + "-number";
+  for (const input of [slider, number]) {
+    input.min = min;
+    input.max = max;
+    input.step = 1;
+    input.value = value;
+    input.setAttribute("aria-label", label);
+    input.addEventListener("wheel", () => input.blur());
+  }
+  function select(value) {
+    onSelect(value);
+    render(true);
+  }
+  slider.addEventListener("input", () => select(Number(slider.value)));
+  number.addEventListener("input", () => {
+    const value = number.valueAsNumber;
+    if (Number.isInteger(value) && value >= min && value <= max) select(value);
+  });
+  number.addEventListener("change", () => {
+    const value = number.valueAsNumber;
+    select(Number.isFinite(value) ? Math.max(min, Math.min(max, Math.round(value))) : Number(slider.value));
+  });
+  container.replaceChildren(slider, number);
+}
+
+function syncNumberControls(id, value) {
+  for (const suffix of ["-range", "-number"]) {
+    const input = byId(id + suffix);
+    if (Number(input.value) !== value || input.value === "") input.value = value;
+  }
+}
+
 function findPreset(profile) {
   return presets.find(preset => preset.choices.every((value, i) => profile[i] === value));
 }
@@ -66,8 +105,10 @@ function referenceProfile() {
 }
 
 function parseProfile(text) {
-  if (!text || text.length !== factors.length) return null;
-  const parsed = [...text].map(Number);
+  if (!text) return null;
+  const fields = text.split(",");
+  if (fields.length !== factors.length || !fields.every(value => /^\d+$/.test(value))) return null;
+  const parsed = fields.map(Number);
   return parsed.every((value, i) => Number.isInteger(value) && value >= 0 && value < factors[i].options.length)
     ? parsed : null;
 }
@@ -78,6 +119,8 @@ function readHash() {
   if (parsedChoices) choices = parsedChoices;
   const s = Number(params.get("s"));
   if (params.has("s") && (s === 0 || s === 1)) sex = s;
+  const a = Number(params.get("a"));
+  if (Number.isInteger(a) && a >= minAge && a <= maxAge) age = a;
   const m = params.get("m");
   if (metrics.some(item => item.id === m)) metric = m;
   const r = params.get("r");
@@ -93,11 +136,12 @@ function readHash() {
 function writeHash() {
   const params = new URLSearchParams({
     s: String(sex),
-    c: choices.join(""),
+    a: String(age),
+    c: choices.join(","),
     r: referenceId,
     m: metric,
   });
-  if (referenceId === "custom" && customReference) params.set("cr", customReference.join(""));
+  if (referenceId === "custom" && customReference) params.set("cr", customReference.join(","));
   history.replaceState(null, "", "#" + params.toString());
 }
 
@@ -105,18 +149,23 @@ function sourceEstimate(factor, option, sexIndex) {
   const kind = factor.id === "activity" || factor.id === "alcohol" ? "RR" : "HR";
   const reference = factor.id === "activity" ? "inactivity" :
     factor.id === "alcohol" ? "lifetime abstainers" : "study reference";
-  const estimate = `${kind} vs ${reference}: ${option.hr[sexIndex].toFixed(2)}`;
-  if (!option.hrCI) return estimate + " (interpolated; CI unavailable)";
-  const [lo, hi] = option.hrCI[sexIndex];
-  return estimate + (lo === hi ? " (reference)" : ` (95% CI ${lo.toFixed(2)}–${hi.toFixed(2)})`);
+  const digits = factor.id === "alcohol" ? 3 : 2;
+  const estimate = `${kind} vs ${reference}: ${option.hr[sexIndex].toFixed(digits)}`;
+  if (!option.hrBounds) return estimate + " (interpolated; CI unavailable)";
+  const [lo, hi] = option.hrBounds[sexIndex];
+  const boundsLabel = factor.id === "alcohol" ? "coefficient-limit range" : "95% CI";
+  const sourceLabel = factor.id === "alcohol" ? "2006 pooled fit: " : "";
+  return sourceLabel + estimate + (lo === hi ? " (reference)" :
+    ` (${boundsLabel} ${lo.toFixed(digits)}–${hi.toFixed(digits)})`);
 }
 
 function optionTitle(factor, option, sexIndex) {
-  const years = `Estimated vs model reference: ${signed(optionYears(factor, option, sexIndex))} yr`;
-  const range = optionYearsRange(factor, option, sexIndex);
-  const interval = range && range[0] !== range[1]
-    ? ` (${option.yearsCI ? "95% CI" : "model range"}: ${signed(range[0])} to ${signed(range[1])} yr)` : "";
-  return sourceEstimate(factor, option, sexIndex) + "\n" + years + interval;
+  const estimate = sourceEstimate(factor, option, sexIndex);
+  if (!option.years) return estimate;
+  const years = `Published age-40 difference vs study reference: ${signed(option.years[sexIndex])} yr`;
+  const range = option.yearsCI?.[sexIndex];
+  return estimate + "\n" + years +
+    (range ? ` (95% CI: ${signed(range[0])} to ${signed(range[1])} yr)` : "");
 }
 
 function renderInputs() {
@@ -128,16 +177,26 @@ function renderInputs() {
     const impact = element("span", "field-impact");
     impact.id = "impact-" + factor.id;
     header.append(label, impact);
-    const row = element("div", "choices");
+    const row = element("div", factor.numeric ? "numeric-choices" : "choices");
     row.id = "choices-" + factor.id;
     row.setAttribute("role", "group");
     row.setAttribute("aria-label", factor.label);
-    buttons(row, factor.options.map((option, index) => ({
-      id: index, label: option.label, title: optionTitle(factor, option, sex),
-    })), choices[i], index => { choices[i] = index; });
+    if (factor.numeric) {
+      numberControls(row, factor.id, "UK alcohol units per week", 0, factor.options.length - 1,
+        choices[i], value => { choices[i] = value; });
+    } else {
+      buttons(row, factor.options.map((option, index) => ({
+        id: index, label: option.label, title: optionTitle(factor, option, sex),
+      })), choices[i], index => { choices[i] = index; });
+    }
     const estimate = element("p", "help source-estimate");
     estimate.id = "estimate-" + factor.id;
     section.append(header, row, element("p", "help", factor.help), estimate);
+    if (factor.id === "alcohol") {
+      const recent = element("p", "help source-estimate");
+      recent.id = "alcohol-recent-evidence";
+      section.append(recent);
+    }
     return section;
   }));
 }
@@ -203,7 +262,7 @@ function renderChart(contributions, reference) {
   }
   byId("chart").replaceChildren(chart);
   byId("chart-note").textContent = display.note +
-    " Whiskers show ranges derived from source 95% confidence limits, holding the other factors fixed. They are not joint confidence intervals.";
+    " Whiskers vary source limits with other factors fixed. Alcohol uses coefficient sensitivity, not a 95% CI. No joint confidence interval.";
 }
 
 function setDelta(id, value, digits = 1) {
@@ -214,15 +273,19 @@ function setDelta(id, value, digits = 1) {
 
 function render(syncHash = false) {
   const reference = referenceProfile();
-  const years = lifeExpectancy(choices, sex);
-  const comparisonYears = lifeExpectancy(reference, sex);
-  const risk = mortalityRisk(choices, sex);
-  const comparisonRisk = mortalityRisk(reference, sex);
-  const contributions = compare(choices, reference, sex);
+  const years = lifeExpectancy(choices, sex, age);
+  const comparisonYears = lifeExpectancy(reference, sex, age);
+  const risk = mortalityRisk(choices, sex, age);
+  const comparisonRisk = mortalityRisk(reference, sex, age);
+  const contributions = compare(choices, reference, sex, age);
   const matching = findPreset(choices);
   byId("your-label").textContent = matching ? matching.label : "Custom lifestyle";
-  byId("your-age").textContent = (40 + years).toFixed(1);
-  byId("reference-age").textContent = (40 + comparisonYears).toFixed(1);
+  byId("your-age").textContent = (age + years).toFixed(1);
+  byId("reference-age").textContent = (age + comparisonYears).toFixed(1);
+  byId("your-remaining").textContent = years.toFixed(1) + " years remaining";
+  byId("reference-remaining").textContent = comparisonYears.toFixed(1) + " years remaining";
+  byId("current-age-label").textContent = "Age " + age + " · Cohort-based estimates";
+  syncNumberControls("age", age);
   byId("your-risk").textContent = risk.toFixed(1) + " millimorts / 10 yr";
   byId("reference-risk").textContent = comparisonRisk.toFixed(1) + " millimorts / 10 yr";
   byId("reference-label").textContent = referenceId === "custom" ? "Custom comparison" :
@@ -232,12 +295,21 @@ function render(syncHash = false) {
   setDelta("microlives-delta", 48 * (years - comparisonYears) / comparisonYears);
   renderChart(contributions, reference);
   for (const [i, factor] of factors.entries()) {
-    setPressed(byId("choices-" + factor.id), choices[i]);
+    if (factor.numeric) syncNumberControls(factor.id, choices[i]);
+    else setPressed(byId("choices-" + factor.id), choices[i]);
     const impact = byId("impact-" + factor.id);
     const value = contributions[i].years;
     impact.textContent = signed(value) + " yr";
     impact.className = "field-impact " + tone(value);
     byId("estimate-" + factor.id).textContent = sourceEstimate(factor, factor.options[choices[i]], sex);
+    if (factor.id === "alcohol") {
+      const recent = recentAlcoholEvidence(choices[i]);
+      const [lo, hi] = recent.hrBounds[sex];
+      byId("alcohol-recent-evidence").textContent =
+        `2023 category (${recent.label}): RR ${recent.hr[sex].toFixed(2)}` +
+        (lo === hi ? " (reference)" : ` (95% CI ${lo.toFixed(2)}–${hi.toFixed(2)})`) +
+        " · comparison only";
+    }
   }
   setPressed(byId("reference-options"), referenceId);
   setPressed(byId("metric-options"), metric);
@@ -252,6 +324,8 @@ function renderReferenceButtons() {
 }
 
 readHash();
+numberControls(byId("age-controls"), "age", "Current age in years", minAge, maxAge, age,
+  value => { age = value; });
 buttons(byId("sex-options"), [{ label: "Men", id: 0 }, { label: "Women", id: 1 }], sex, id => {
   sex = id;
   renderInputs();
@@ -289,6 +363,7 @@ byId("swap-reference").addEventListener("click", () => {
 byId("reset").addEventListener("click", () => {
   choices = [...initial];
   sex = 0;
+  age = calibrationAge;
   referenceId = "comparison";
   customReference = null;
   metric = "risk";
